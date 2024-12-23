@@ -29,7 +29,7 @@ func GenerateJWT(userid string) (string, error) {
 		UserID: userid,
 		Exp:    time.Now().Add(TokenExpiryDuration).Unix(),
 		Iat:    time.Now().Unix(),
-		Iss:    "syncroapp",
+		Iss:    "stepup",
 		Sub:    userid,
 	}
 

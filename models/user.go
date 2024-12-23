@@ -9,6 +9,7 @@ type LoginRequest struct {
 
 // User represents the structure of a user
 type User struct {
+	UserID    string    `bson:"userid"`
 	Email     string    `bson:"email"`
 	Password  string    `bson:"password"`
 	Role      string    `bson:"role"`

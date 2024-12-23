@@ -3,8 +3,10 @@ package controllers
 import (
 	"be-stepup/config"
 	"be-stepup/models"
+	jwtoken "be-stepup/package/token"
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
@@ -43,6 +45,9 @@ func Register(c *fiber.Ctx) error {
 
 	// Set Name and CreatedAt
 	user.CreatedAt = time.Now() // Menambahkan tanggal pembuatan akun
+
+	// Generate UserID
+	user.UserID = uuid.New().String()
 
 	// Insert user into database
 	_, err = collection.InsertOne(ctx, user)
@@ -92,9 +97,17 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
+	token, err := jwtoken.GenerateJWT(user.UserID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to generate token",
+		})
+	}
+
 	// Respond with user role
 	return c.JSON(fiber.Map{
 		"message": "Login successful",
 		"role":    user.Role,
+		"token":   token,
 	})
 }
