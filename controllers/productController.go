@@ -72,13 +72,34 @@ func CreateProduct(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Failed to parse request"})
 	}
 
-	// Validasi harga dan stok
+	// Validasi harga
 	if product.Price <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Price must be greater than zero"})
 	}
-	if product.Stock < 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Stock cannot be negative"})
+
+	// Tambahkan stok per ukuran jika belum ada
+	if product.SizeStock == nil || len(product.SizeStock) == 0 {
+		product.SizeStock = map[string]int{
+			"38": 0,
+			"39": 0,
+			"40": 0,
+			"41": 0,
+			"42": 0,
+			"43": 0,
+		}
 	}
+
+	// Validasi stok per ukuran dan hitung total stok
+	totalStock := 0
+	for size, stock := range product.SizeStock {
+		if stock < 0 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": fmt.Sprintf("Stock for size %s cannot be negative", size),
+			})
+		}
+		totalStock += stock
+	}
+	product.Stock = totalStock
 
 	// Penanganan gambar
 	file, err := c.FormFile("image")
@@ -104,6 +125,7 @@ func CreateProduct(c *fiber.Ctx) error {
 		"productID":   product.ID.Hex(),
 		"productCode": product.Code,
 		"imageURL":    product.ImageURL,
+		"sizeStock":   product.SizeStock,
 	})
 }
 
@@ -233,4 +255,33 @@ func UploadImage(c *fiber.Ctx) error {
 
 	// Kembalikan URL sebagai respons
 	return c.JSON(fiber.Map{"image_url": fileURL})
+}
+
+// GetStockBySize fetches stock for specific sizes
+func GetStockBySize(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	productID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid product ID"})
+	}
+
+	collection := config.GetCollection("products")
+	var product models.Product
+	err = collection.FindOne(c.Context(), bson.M{"_id": productID}).Decode(&product)
+	if err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Product not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Error fetching product"})
+	}
+
+	// Filter ukuran 38-43
+	sizeStock := make(map[string]int)
+	for size, stock := range product.SizeStock {
+		if size >= "38" && size <= "43" {
+			sizeStock[size] = stock
+		}
+	}
+
+	return c.JSON(sizeStock)
 }

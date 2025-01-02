@@ -2,6 +2,7 @@ package main
 
 import (
 	"be-stepup/config"
+	"be-stepup/controllers"
 	"be-stepup/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -19,6 +20,12 @@ func main() {
 	// Middleware untuk logging
 	app.Use(logger.New())
 
+	// Tambahkan rute untuk register
+	app.Post("/api/register", controllers.Register)
+
+	// Route untuk login
+	app.Post("/api/login", controllers.Login)
+
 	// Middleware untuk mengatasi CORS
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "http://127.0.0.1:5500", // Domain frontend Anda
@@ -34,7 +41,7 @@ func main() {
 
 	// Atur semua rute
 	routes.SetupRoutes(app)
-	
+
 	// Middleware untuk melayani file statis dari folder uploads
 	app.Static("/uploads", "./uploads")
 

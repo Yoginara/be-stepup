@@ -13,5 +13,6 @@ type Product struct {
 	Color       string             `bson:"color" json:"color"`
 	Price       float64            `bson:"price" json:"price"`
 	Stock       int                `bson:"stock" json:"stock"`
+	SizeStock   map[string]int     `bson:"size_stock" json:"size_stock"` // Stok berdasarkan ukuran
 	ImageURL    string             `bson:"image_url" json:"image_url"`
 }

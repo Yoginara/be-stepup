@@ -43,11 +43,10 @@ func Register(c *fiber.Ctx) error {
 	}
 	user.Password = string(hashedPassword)
 
-	// Set Name and CreatedAt
-	user.CreatedAt = time.Now() // Menambahkan tanggal pembuatan akun
-
-	// Generate UserID
-	user.UserID = uuid.New().String()
+	// Set default values for new user
+	user.CreatedAt = time.Now()       // Set created_at
+	user.UserID = uuid.New().String() // Generate user ID
+	user.Cart = []models.CartItem{}   // Initialize empty cart
 
 	// Insert user into database
 	_, err = collection.InsertOne(ctx, user)
@@ -57,9 +56,12 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 
+	// Remove sensitive data from response
+	user.Password = ""
+
 	return c.JSON(fiber.Map{
 		"message": "User registered successfully",
-		"user":    user, // Kembalikan informasi pengguna yang baru dibuat
+		"user":    user,
 	})
 }
 
