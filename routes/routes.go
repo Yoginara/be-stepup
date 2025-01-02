@@ -35,6 +35,8 @@ func SetupRoutes(app *fiber.App) {
 
 	// Rute keranjang belanja (dengan autentikasi)
 	app.Post("/api/cart/add", middleware.JWTAuthMiddleware, controllers.AddToCart)
+	// Proteksi endpoint RemoveSingleCartItem dengan middleware JWT
+	app.Delete("/cart/remove-single", middleware.JWTAuthMiddleware, controllers.RemoveSingleCartItem)
 
 	app.Get("/products/:id/sizes", controllers.GetStockBySize)
 

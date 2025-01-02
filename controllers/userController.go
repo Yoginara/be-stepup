@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"time"
 
@@ -42,18 +41,9 @@ func GetAllUsers(c *fiber.Ctx) error {
 	return c.JSON(users)
 }
 
-// GetUserByID retrieves a user by their ID from the database
 func GetUserByID(c *fiber.Ctx) error {
 	// Ambil ID dari parameter URL
 	id := c.Params("id")
-
-	// Validasi ID
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid user ID format",
-		})
-	}
 
 	// Membuat konteks dengan timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -62,12 +52,17 @@ func GetUserByID(c *fiber.Ctx) error {
 	// Mengambil koleksi user dari database
 	userCollection := config.GetCollection("users")
 
-	// Mencari user berdasarkan ID
+	// Mencari user berdasarkan `userid`
 	var user models.User
-	err = userCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&user)
+	err := userCollection.FindOne(ctx, bson.M{"userid": id}).Decode(&user)
 	if err != nil {
-		return c.Status(http.StatusNotFound).JSON(fiber.Map{
-			"error": "User not found",
+		if err.Error() == "mongo: no documents in result" {
+			return c.Status(http.StatusNotFound).JSON(fiber.Map{
+				"error": "User not found",
+			})
+		}
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch user",
 		})
 	}
 

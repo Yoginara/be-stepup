@@ -3,6 +3,7 @@ package main
 import (
 	"be-stepup/config"
 	"be-stepup/controllers"
+	"be-stepup/middleware"
 	"be-stepup/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -25,6 +26,9 @@ func main() {
 
 	// Route untuk login
 	app.Post("/api/login", controllers.Login)
+
+	// Proteksi endpoint AddToCart dengan middleware JWT
+	app.Post("/cart/add", middleware.JWTAuthMiddleware, controllers.AddToCart)
 
 	// Middleware untuk mengatasi CORS
 	app.Use(cors.New(cors.Config{

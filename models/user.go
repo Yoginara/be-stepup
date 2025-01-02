@@ -20,7 +20,8 @@ type User struct {
 
 // CartItem defines the structure of an item in the scart
 type CartItem struct {
-	ProductID string  `bson:"product_id" json:"product_id"`
-	Quantity  int     `bson:"quantity" json:"quantity"`
-	Price     float64 `bson:"price" json:"price"`
+	ProductID   string  `bson:"product_id" json:"product_id"`
+	ProductCode string  `bson:"product_code" json:"product_code"`
+	Quantity    int     `bson:"quantity" json:"quantity"`
+	Price       float64 `bson:"price" json:"price"`
 }
