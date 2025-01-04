@@ -21,19 +21,11 @@ func main() {
 	// Middleware untuk logging
 	app.Use(logger.New())
 
-	// Tambahkan rute untuk register
-	app.Post("/api/register", controllers.Register)
-
-	// Route untuk login
-	app.Post("/api/login", controllers.Login)
-
-	// Proteksi endpoint AddToCart dengan middleware JWT
-	app.Post("/cart/add", middleware.JWTAuthMiddleware, controllers.AddToCart)
-
-	// Middleware untuk mengatasi CORS
+	// Middleware untuk mengatasi CORS (Didefinisikan sebelum rute)
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "http://127.0.0.1:5500", // Domain frontend Anda
-		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 
 	// Menghubungkan ke database MongoDB
@@ -45,6 +37,15 @@ func main() {
 
 	// Atur semua rute
 	routes.SetupRoutes(app)
+
+	// Tambahkan rute untuk register
+	app.Post("/api/register", controllers.Register)
+
+	// Route untuk login
+	app.Post("/api/login", controllers.Login)
+
+	// Proteksi endpoint AddToCart dengan middleware JWT
+	app.Post("/cart/add", middleware.JWTAuthMiddleware, controllers.AddToCart)
 
 	// Middleware untuk melayani file statis dari folder uploads
 	app.Static("/uploads", "./uploads")

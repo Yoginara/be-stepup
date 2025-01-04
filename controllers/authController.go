@@ -46,7 +46,6 @@ func Register(c *fiber.Ctx) error {
 	// Set default values for new user
 	user.CreatedAt = time.Now()       // Set created_at
 	user.UserID = uuid.New().String() // Generate user ID
-	user.Cart = []models.CartItem{}   // Initialize empty cart
 
 	// Insert user into database
 	_, err = collection.InsertOne(ctx, user)
@@ -110,6 +109,7 @@ func Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": "Login successful",
 		"role":    user.Role,
+		"name":    user.Name,
 		"token":   token,
 	})
 }
