@@ -39,6 +39,18 @@ func SetupRoutes(app *fiber.App) {
 	app.Get("/api/cart", middleware.JWTAuthMiddleware, controllers.GetAllCart)                            // Mendapatkan semua item dalam keranjang
 	app.Put("/api/cart", middleware.JWTAuthMiddleware, controllers.UpdateCartItem)
 
-	// Rute untuk mendapatkan stok produk berdasarkan ukuran
-	app.Get("/products/:id/sizes", controllers.GetStockBySize)
+	// Rute checkout (dengan autentikasi)
+	app.Post("/api/checkout", middleware.JWTAuthMiddleware, controllers.CreateCheckout)              // Membuat checkout baru
+	app.Get("/api/checkout/:checkout_id", middleware.JWTAuthMiddleware, controllers.GetCheckoutByID) // Mendapatkan checkout berdasarkan ID
+	app.Put("/api/checkout/:checkout_id", controllers.UpdateCheckout)                                // Memperbarui checkout berdasarkan ID
+	app.Get("/checkouts", controllers.GetAllCheckout)
+	app.Delete("/checkout/:checkout_id", controllers.DeleteCheckout)
+
+	// Rute pembayaran (dengan autentikasi)
+	paymentGroup := app.Group("/api/payment", middleware.JWTAuthMiddleware)
+	paymentGroup.Post("/:checkout_id", controllers.SavePayment)           // Menyimpan bukti pembayaran
+	paymentGroup.Get("/:checkout_id", controllers.GetPaymentByCheckoutID) // Mendapatkan bukti pembayaran berdasarkan checkoutID
+
+	app.Put("/:payment_id/status", controllers.UpdatePaymentStatus) // Memperbarui status pembayaran
+	app.Get("/payments", controllers.GetAllPayments)
 }

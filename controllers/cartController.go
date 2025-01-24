@@ -96,6 +96,41 @@ func AddToCart(c *fiber.Ctx) error {
 		})
 	}
 
+	// Mencari produk berdasarkan ProductID
+	productCollection := config.GetCollection("products")
+	var product models.Product
+	err = productCollection.FindOne(ctx, bson.M{"product_id": cartItem.ProductID}).Decode(&product)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(http.StatusNotFound).JSON(fiber.Map{
+				"error": "Produk tidak ditemukan",
+			})
+		}
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Gagal mendapatkan produk",
+		})
+	}
+
+	// Mengecek apakah stok cukup
+	if product.Stock < cartItem.Quantity {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Stok produk tidak cukup",
+		})
+	}
+
+	// Mengurangi stok produk
+	newStock := product.Stock - cartItem.Quantity
+	_, err = productCollection.UpdateOne(
+		ctx,
+		bson.M{"product_id": cartItem.ProductID},
+		bson.M{"$set": bson.M{"stock": newStock}},
+	)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Gagal memperbarui stok produk",
+		})
+	}
+
 	// Mencari keranjang berdasarkan userID
 	var cart models.Cart
 	err = collection.FindOne(ctx, bson.M{"user_id": userID}).Decode(&cart)

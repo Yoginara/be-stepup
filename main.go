@@ -47,6 +47,9 @@ func main() {
 	// Proteksi endpoint AddToCart dengan middleware JWT
 	app.Post("/cart/add", middleware.JWTAuthMiddleware, controllers.AddToCart)
 
+	// Melayani file statis dari folder `payment`
+	app.Static("/payment", "./payment")
+
 	// Middleware untuk melayani file statis dari folder uploads
 	app.Static("/uploads", "./uploads")
 

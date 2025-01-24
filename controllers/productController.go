@@ -14,7 +14,6 @@ import (
 // Definisikan folder untuk menyimpan file upload
 const uploadDir = "uploads"
 
-// GetAllProducts fetches all products from the database
 func GetAllProducts(c *fiber.Ctx) error {
 	var products []models.Product
 	collection := config.GetCollection("products")
@@ -62,9 +61,12 @@ func GetProductByID(c *fiber.Ctx) error {
 	return c.JSON(product)
 }
 
-// CreateProduct creates a new product
+// CreateProduct creates a new product and saves it to the database
 func CreateProduct(c *fiber.Ctx) error {
 	var product models.Product
+
+	// Generate unique ProductID
+	product.ProductID = "PROD-" + uuid.New().String()[:8]
 	product.Code = "SKU-" + uuid.New().String()[:8]
 
 	// Parsing data produk
@@ -77,38 +79,19 @@ func CreateProduct(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Price must be greater than zero"})
 	}
 
-	// Tambahkan stok per ukuran jika belum ada
-	if product.SizeStock == nil || len(product.SizeStock) == 0 {
-		product.SizeStock = map[string]int{
-			"38": 0,
-			"39": 0,
-			"40": 0,
-			"41": 0,
-			"42": 0,
-			"43": 0,
-		}
+	// Validasi stok
+	if product.Stock < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Stock cannot be negative"})
 	}
-
-	// Validasi stok per ukuran dan hitung total stok
-	totalStock := 0
-	for size, stock := range product.SizeStock {
-		if stock < 0 {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": fmt.Sprintf("Stock for size %s cannot be negative", size),
-			})
-		}
-		totalStock += stock
-	}
-	product.Stock = totalStock
 
 	// Penanganan gambar
 	file, err := c.FormFile("image")
 	if err == nil { // Gambar berhasil diterima
-		savePath := fmt.Sprintf("./uploads/%s", file.Filename)
+		savePath := fmt.Sprintf("./%s/%s", uploadDir, file.Filename)
 		if err := c.SaveFile(file, savePath); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save image"})
 		}
-		product.ImageURL = fmt.Sprintf("http://localhost:3000/uploads/%s", file.Filename)
+		product.ImageURL = fmt.Sprintf("http://localhost:3000/%s/%s", uploadDir, file.Filename)
 	} else {
 		product.ImageURL = "" // Kosongkan jika gambar tidak diunggah
 	}
@@ -122,14 +105,13 @@ func CreateProduct(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message":     "Product created successfully",
-		"productID":   product.ID.Hex(),
+		"productID":   product.ProductID,
 		"productCode": product.Code,
 		"imageURL":    product.ImageURL,
-		"sizeStock":   product.SizeStock,
+		"stock":       product.Stock,
 	})
 }
 
-// UpdateProduct updates an existing product
 // UpdateProduct updates an existing product
 func UpdateProduct(c *fiber.Ctx) error {
 	idParam := c.Params("id")
@@ -255,33 +237,4 @@ func UploadImage(c *fiber.Ctx) error {
 
 	// Kembalikan URL sebagai respons
 	return c.JSON(fiber.Map{"image_url": fileURL})
-}
-
-// GetStockBySize fetches stock for specific sizes
-func GetStockBySize(c *fiber.Ctx) error {
-	idParam := c.Params("id")
-	productID, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid product ID"})
-	}
-
-	collection := config.GetCollection("products")
-	var product models.Product
-	err = collection.FindOne(c.Context(), bson.M{"_id": productID}).Decode(&product)
-	if err != nil {
-		if err.Error() == "mongo: no documents in result" {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Product not found"})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Error fetching product"})
-	}
-
-	// Filter ukuran 38-43
-	sizeStock := make(map[string]int)
-	for size, stock := range product.SizeStock {
-		if size >= "38" && size <= "43" {
-			sizeStock[size] = stock
-		}
-	}
-
-	return c.JSON(sizeStock)
 }
