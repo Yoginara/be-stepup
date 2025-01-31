@@ -118,19 +118,6 @@ func AddToCart(c *fiber.Ctx) error {
 		})
 	}
 
-	// Mengurangi stok produk
-	newStock := product.Stock - cartItem.Quantity
-	_, err = productCollection.UpdateOne(
-		ctx,
-		bson.M{"product_id": cartItem.ProductID},
-		bson.M{"$set": bson.M{"stock": newStock}},
-	)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Gagal memperbarui stok produk",
-		})
-	}
-
 	// Mencari keranjang berdasarkan userID
 	var cart models.Cart
 	err = collection.FindOne(ctx, bson.M{"user_id": userID}).Decode(&cart)

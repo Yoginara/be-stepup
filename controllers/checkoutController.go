@@ -69,9 +69,49 @@ func CreateCheckout(c *fiber.Ctx) error {
 		})
 	}
 
-	// Menghitung total harga
+	// Mengambil koleksi `products`
+	productCollection := config.GetCollection("products")
+
+	// Menghitung total harga dan mengurangi stok produk
 	var totalPrice float64
 	for _, item := range cart.Items {
+		var product models.Product
+		err := productCollection.FindOne(ctx, bson.M{"product_id": item.ProductID}).Decode(&product)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return c.Status(http.StatusNotFound).JSON(fiber.Map{
+					"success": false,
+					"error":   "Produk tidak ditemukan",
+				})
+			}
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"error":   "Gagal mendapatkan produk",
+			})
+		}
+
+		// Mengecek apakah stok cukup
+		if product.Stock < item.Quantity {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"error":   "Stok produk tidak cukup untuk " + product.Name,
+			})
+		}
+
+		// Mengurangi stok produk
+		newStock := product.Stock - item.Quantity
+		_, err = productCollection.UpdateOne(
+			ctx,
+			bson.M{"product_id": item.ProductID},
+			bson.M{"$set": bson.M{"stock": newStock}},
+		)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"error":   "Gagal memperbarui stok produk",
+			})
+		}
+
 		totalPrice += item.Price * float64(item.Quantity)
 	}
 
