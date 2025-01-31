@@ -15,6 +15,7 @@ services:
         ipv4_address: 192.168.1.8
     volumes:
       - stepup_data:/app/data
+      - ./uploads:/app/uploads  # Mount the uploads directory
 
 networks:
   liliumnet:

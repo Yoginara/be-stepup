@@ -87,7 +87,7 @@ func CreateProduct(c *fiber.Ctx) error {
 	// Penanganan gambar
 	file, err := c.FormFile("image")
 	if err == nil { // Gambar berhasil diterima
-		savePath := fmt.Sprintf("./%s/%s", uploadDir, file.Filename)
+		savePath := fmt.Sprintf("/app/uploads/%s", file.Filename)
 		if err := c.SaveFile(file, savePath); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save image"})
 		}
@@ -225,7 +225,7 @@ func UploadImage(c *fiber.Ctx) error {
 	}
 
 	// Tentukan lokasi penyimpanan file
-	savePath := fmt.Sprintf("./uploads/%s", file.Filename)
+	savePath := fmt.Sprintf("/app/uploads/%s", file.Filename)
 
 	// Simpan file ke folder uploads
 	if err := c.SaveFile(file, savePath); err != nil {
