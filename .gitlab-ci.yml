@@ -1,0 +1,30 @@
+
+variables:
+  GIT_DEPTH: 1
+stages:
+  - build
+  - deploy
+variables:
+  DOCKER_CLI_EXPERIMENTAL: "enabled"
+build-docker:
+  only:
+    - main
+  stage: build
+  script:
+    - echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE:prod-latest -f ./Dockerfile .
+    - docker push $CI_REGISTRY_IMAGE:prod-latest
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+deploy:
+  stage: deploy
+  only:
+    - main
+  script:
+    - echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:prod-latest
+    - docker compose -f ./docker-compose.yml up -d
+    - docker image prune -f
