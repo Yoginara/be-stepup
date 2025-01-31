@@ -138,6 +138,10 @@ func AddToCart(c *fiber.Ctx) error {
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			// Jika keranjang belum ada, buat keranjang baru dengan user_name
+			cartItem.ProductCode = product.Code
+			cartItem.ProductName = product.Name
+			cartItem.ImageURL = product.ImageURL
+
 			cart = models.Cart{
 				CartID:     generateUniqueID(),
 				UserID:     userID,
@@ -174,7 +178,11 @@ func AddToCart(c *fiber.Ctx) error {
 	}
 
 	if !itemFound {
-		// Tambahkan item baru
+		// Tambahkan item baru dengan informasi produk yang diperlukan
+		cartItem.ProductCode = product.Code
+		cartItem.ProductName = product.Name
+		cartItem.ImageURL = product.ImageURL
+
 		cart.Items = append(cart.Items, cartItem)
 	}
 
