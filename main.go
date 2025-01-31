@@ -58,7 +58,7 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	// Menjalankan server di port tertentu
-	port := ":3000" // Sesuaikan dengan port yang diinginkan
+	port := ":80" // Sesuaikan dengan port yang diinginkan
 	go func() {
 		log.Printf("Server is running on http://localhost%s", port)
 		if err := app.Listen(port); err != nil {
