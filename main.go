@@ -23,7 +23,7 @@ func main() {
 
 	// Middleware untuk mengatasi CORS (Didefinisikan sebelum rute)
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://127.0.0.1:5500", // Domain frontend Anda
+		AllowOrigins: "http://127.0.0.1:5500, https://narasaon.me",
 		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
